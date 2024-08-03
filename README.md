@@ -61,6 +61,10 @@ The script is located in the file `copy_drive_folder.py`.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Related Projects
+
+- [Google Drive Batch Delete](https://github.com/your-username/google-drive-batch-delete): Use your browser to batch delete files from Google Drive folders that match a specific pattern, all online using Google Colab.
+
 ## Key Topics
 
 - no coding required
