@@ -1,5 +1,3 @@
-# copy_drive_folder.py
-
 # Install PyDrive2
 !pip install pydrive2
 
