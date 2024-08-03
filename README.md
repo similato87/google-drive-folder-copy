@@ -63,7 +63,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Related Projects
 
-- [Google Drive Batch Delete](https://github.com/your-username/google-drive-batch-delete): Use your browser to batch delete files from Google Drive folders that match a specific pattern, all online using Google Colab.
+- [Google Drive Batch Delete](https://github.com/similato87/google-drive-batch-delete): Use your browser to batch delete files from Google Drive folders that match a specific pattern, all online using Google Colab.
 
 ## Key Topics
 
