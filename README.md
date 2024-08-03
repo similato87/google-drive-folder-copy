@@ -4,13 +4,15 @@ This repository contains a script to copy all files and folders from a shared Go
 
 ## Features
 
-- Recursively copies all files and subfolders from a shared Google Drive folder.
-- Ensures that you have a copy of the shared content even if the original owner stops sharing.
+- **No Coding Skills Required**: You don't need to know any programming or coding to use this script.
+- **Browser-Based Solution**: All steps are performed online in your web browser using Google Colab.
+- **Simple and Easy Setup**: Follow the step-by-step instructions to quickly set up and run the script.
+- **Automated Process**: The script automates the copying process, saving you time and effort.
+- **User-Friendly Instructions**: Detailed, user-friendly instructions make it easy for anyone to follow.
 
 ## Prerequisites
 
 - A Google account with access to Google Drive.
-- Basic knowledge of Google Colab.
 
 ## Setup Instructions
 
@@ -36,7 +38,8 @@ This repository contains a script to copy all files and folders from a shared Go
 1. Open [Google Colab](https://colab.research.google.com/) and create a new notebook.
 2. Copy the contents of `copy_drive_folder.py` into a cell in the notebook.
 3. Replace `SHARED_FOLDER_ID` and `MY_OWN_FOLDER_ID` with the IDs obtained in Step 1.
-4. Run the cell to execute the script.
+4. **Grant Permissions**: When prompted, a pop-up window will ask for permissions to access your Google Drive. Make sure to tick all the necessary boxes to grant permissions.
+5. Run the cell to execute the script.
 
 ## Time Estimates
 
@@ -57,3 +60,21 @@ The script is located in the file `copy_drive_folder.py`.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Key Topics
+
+- no coding required
+- browser-based solution
+- easy setup
+- quick execution
+- automated process
+- secure
+- user-friendly instructions
+- error handling
+- time-efficient
+- online
+- Google Drive
+- Google Colab
+- PyDrive2
+- shared folder
+- file copy
