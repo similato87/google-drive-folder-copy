@@ -49,7 +49,7 @@ This repository contains a script to copy all files and folders from a shared Go
 
 ## Script
 
-The script is located in the file `copy_drive_folder.py`.
+The script is located in the file [`copy_drive_folder.py`](copy_drive_folder.py).
 
 ### Usage
 
