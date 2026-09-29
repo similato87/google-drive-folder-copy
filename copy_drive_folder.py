@@ -1,63 +1,98 @@
-# Install PyDrive2 if not already installed
-!pip install pydrive2
-
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
+import re
 from google.colab import auth
-from oauth2client.client import GoogleCredentials
-import os
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
-# Authenticate and create the PyDrive client.
+# 1. Authenticate
+print("Authenticating...", flush=True)
 auth.authenticate_user()
-gauth = GoogleAuth()
-gauth.credentials = GoogleCredentials.get_application_default()
-drive = GoogleDrive(gauth)
+drive_service = build('drive', 'v3')
+print("Authentication successful.", flush=True)
 
-# Folder IDs
-shared_folder_id = '*********************************'  # Replace with actual shared folder ID
-my_own_folder_id = '*********************************'  # Replace with your own folder ID
+# 2. Paste IDs or Full URLs here
+SOURCE_INPUT = '1BABM5rOd-UGjECZwhiMaNys1n95lJV1j'
+DEST_INPUT   = '1ctUmG7LDU1LL1-Ta07Tk03Cz9BEGF2e0'
 
-# Function to list files in a folder
-def list_files_in_folder(folder_id):
+def extract_id(drive_input):
+    """Extracts alphanumeric ID if a full Google Drive URL was pasted."""
+    match = re.search(r'folders/([a-zA-Z0-9_-]+)', drive_input)
+    if match:
+        return match.group(1)
+    match_id = re.search(r'id=([a-zA-Z0-9_-]+)', drive_input)
+    if match_id:
+        return match_id.group(1)
+    return drive_input.strip()
+
+source_id = extract_id(SOURCE_INPUT)
+dest_id = extract_id(DEST_INPUT)
+
+# 3. Verify access to both folders
+def verify_folder(folder_id, label):
     try:
-        file_list = drive.ListFile({'q': f"'{folder_id}' in parents and trashed=false"}).GetList()
-        return file_list
-    except Exception as e:
-        print(f"Failed to list files in folder with ID: {folder_id}, Error: {e}")
-        return []
+        folder = drive_service.files().get(
+            fileId=folder_id,
+            fields='id, name, mimeType',
+            supportsAllDrives=True
+        ).execute()
+        print(f"Verified {label}: '{folder.get('name')}' (ID: {folder_id})", flush=True)
+        return True
+    except HttpError as e:
+        print(f"ERROR: Cannot access {label} (ID: {folder_id}). Check permissions/ID. Error: {e}", flush=True)
+        return False
 
-# Function to recursively copy files and folders
-def copy_files_and_folders(source_folder_id, dest_folder_id, files_copied):
-    items = list_files_in_folder(source_folder_id)
+if not (verify_folder(source_id, "Source") and verify_folder(dest_id, "Destination")):
+    raise SystemExit("Stopping: Invalid folder access.")
+
+# 4. Copy logic with instant logging
+def copy_recursive(src_id, dst_id):
+    query = f"'{src_id}' in parents and trashed = false"
+    page_token = None
+    items = []
+
+    print(f"\nScanning contents of folder ID: {src_id}...", flush=True)
+    while True:
+        res = drive_service.files().list(
+            q=query,
+            fields="nextPageToken, files(id, name, mimeType)",
+            pageToken=page_token,
+            pageSize=100,
+            includeItemsFromAllDrives=True,
+            supportsAllDrives=True
+        ).execute()
+        items.extend(res.get('files', []))
+        page_token = res.get('nextPageToken')
+        if not page_token:
+            break
+
+    print(f"Found {len(items)} items to process in this folder.", flush=True)
+
     for item in items:
-        try:
-            if item['mimeType'] == 'application/vnd.google-apps.folder':
-                # Create the same folder in the destination folder
-                new_folder = drive.CreateFile({'title': item['title'], 'mimeType': 'application/vnd.google-apps.folder', 'parents': [{'id': dest_folder_id}]})
-                new_folder.Upload()
-                print(f"Copied folder: {item['title']}")
-                # Recursively copy the contents of the folder
-                copy_files_and_folders(item['id'], new_folder['id'], files_copied)
-            else:
-                # Copy the file
-                copied_file = drive.CreateFile({'title': item['title'], 'parents': [{'id': dest_folder_id}], 'mimeType': item['mimeType']})
-                item.GetContentFile(item['title'], mimetype=item['mimeType'])
-                copied_file.SetContentFile(item['title'])
-                copied_file.Upload()
-                os.remove(item['title'])  # Clean up the downloaded file
-                files_copied.append(item['title'])
-                print(f"Copied file: {item['title']}")
-        except Exception as e:
-            print(f"Failed to copy item: {item['title']}, Error: {e}")
+        name = item['name']
+        mime = item['mimeType']
+        item_id = item['id']
 
-# Track copied files
-files_copied = []
+        if mime == 'application/vnd.google-apps.folder':
+            print(f"--> Creating subfolder: {name}...", flush=True)
+            new_folder = drive_service.files().create(
+                body={'name': name, 'mimeType': mime, 'parents': [dst_id]},
+                fields='id',
+                supportsAllDrives=True
+            ).execute()
+            # Recurse
+            copy_recursive(item_id, new_folder['id'])
+        else:
+            print(f"--> Server-side copying: {name}...", end=" ", flush=True)
+            try:
+                drive_service.files().copy(
+                    fileId=item_id,
+                    body={'name': name, 'parents': [dst_id]},
+                    fields='id',
+                    supportsAllDrives=True
+                ).execute()
+                print("DONE", flush=True)
+            except HttpError as err:
+                print(f"FAILED ({err})", flush=True)
 
-# Start copying process
-copy_files_and_folders(shared_folder_id, my_own_folder_id, files_copied)
-
-# Report copied files
-print("\nCopy Summary:")
-print(f"Total files copied: {len(files_copied)}")
-for file_name in files_copied:
-    print(file_name)
+print("\nStarting copy process...", flush=True)
+copy_recursive(source_id, dest_id)
+print("\nOperation completed successfully.", flush=True)
