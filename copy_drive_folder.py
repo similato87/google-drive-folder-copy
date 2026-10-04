@@ -39,12 +39,12 @@ def copy_files_and_folders(source_folder_id, dest_folder_id, files_copied):
                 # Recursively copy the contents of the folder
                 copy_files_and_folders(item['id'], new_folder['id'], files_copied)
             else:
-                # Copy the file
-                copied_file = drive.CreateFile({'title': item['title'], 'parents': [{'id': dest_folder_id}], 'mimeType': item['mimeType']})
-                item.GetContentFile(item['title'], mimetype=item['mimeType'])
-                copied_file.SetContentFile(item['title'])
-                copied_file.Upload()
-                os.remove(item['title'])  # Clean up the downloaded file
+                # Server-side copy: works for Google Docs/Sheets/Slides and regular files
+                drive.auth.service.files().copy(
+                    fileId=item['id'],
+                    body={'title': item['title'], 'parents': [{'id': dest_folder_id}]},
+                    supportsAllDrives=True
+                ).execute()
                 files_copied.append(item['title'])
                 print(f"Copied file: {item['title']}")
         except Exception as e:
